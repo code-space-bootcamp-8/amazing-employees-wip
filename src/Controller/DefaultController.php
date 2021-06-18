@@ -6,6 +6,7 @@ namespace App\Controller;
 
 use App\Entity\Employee;
 use App\Repository\EmployeeRepository;
+use App\Service\EmployeeNormalize;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -99,19 +100,23 @@ class DefaultController extends AbstractController
      * buscará la acción coincidente con la ruta indicada
      * y mostrará la información asociada.
      */
-    public function indexJson(Request $request, EmployeeRepository $employeeRepository): JsonResponse {
+    public function indexJson(
+        Request $request,
+        EmployeeRepository $employeeRepository,
+        EmployeeNormalize $employeeNormalize
+    ): JsonResponse {
         $result = $request->query->has('id') ? 
             $employeeRepository->find($request->query->get('id')) :
             $employeeRepository->findAll();
 
         if ($result instanceof Employee) {
-            return $this->json($this->normalizeEmployee($result));
+            return $this->json($employeeNormalize->employeeNormalize($result));
         }
 
         $data = [];
 
         foreach ($result as $employee) {
-            array_push($data, $this->normalizeEmployee($employee));
+            array_push($data, $employeeNormalize->employeeNormalize($employee));
         }
 
         return $this->json($data);

@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Entity\Employee;
 use App\Repository\EmployeeRepository;
+use App\Service\EmployeeNormalize;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -23,15 +24,29 @@ class ApiEmployeesController extends AbstractController
      *      methods={"GET"}
      * )
      */
-    public function index(Request $request, EmployeeRepository $employeeRepository): Response
+    public function index(Request $request, EmployeeRepository $employeeRepository, EmployeeNormalize $employeeNormalize): Response
     {
         if($request->query->has('term')) {
-            $people = $employeeRepository->findByTerm($request->query->get('term'));
+            $result = $employeeRepository->findByTerm($request->query->get('term'));
 
-            return $this->json($people);
+            $data = [];
+
+            foreach($result as $employee) {
+                $data[] = $employeeNormalize->employeeNormalize($employee);   
+            }
+    
+            return $this->json($data);
         }
 
-        return $this->json($employeeRepository->findAll());
+        $result = $employeeRepository->findAll();
+
+        $data = [];
+
+        foreach($result as $employee) {
+            $data[] = $employeeNormalize->employeeNormalize($employee);   
+        }
+
+        return $this->json($data);
     }
 
     /**
@@ -44,14 +59,12 @@ class ApiEmployeesController extends AbstractController
      *      }
      * )
      */
-    public function show(int $id, EmployeeRepository $employeeRepository): Response
+    public function show(
+        Employee $employee,
+        EmployeeNormalize $employeeNormalize
+    ): Response
     {
-        $data = $employeeRepository->find($id);
-
-        dump($id);
-        dump($data);
-
-        return $this->json($data);
+        return $this->json($employeeNormalize->employeeNormalize($employee));
     }
 
     /**
