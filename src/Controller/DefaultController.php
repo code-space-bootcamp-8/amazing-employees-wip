@@ -132,7 +132,7 @@ class DefaultController extends AbstractController
      *      }
      * )
      * 
-     * @IsGranted('ROLE_ADMIN')
+     * @IsGranted("ROLE_ADMIN")
      */
     // La técinca ParamConverte inyecta directamente,
     // un objeto del tipo indicado como parámetro
