@@ -9,8 +9,10 @@ use App\Service\EmployeeNormalize;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\File\Exception\FileException;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\String\Slugger\SluggerInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 /**
@@ -80,9 +82,13 @@ class ApiEmployeesController extends AbstractController
         EntityManagerInterface $entityManager,
         ValidatorInterface $validator,
         DepartmentRepository $departmentRepository,
-        EmployeeNormalize $employeeNormalize
+        EmployeeNormalize $employeeNormalize,
+        SluggerInterface $slug
     ): Response {
         $data = $request->request;
+
+        dump($data);
+        dump($request->files);
 
         $department = $departmentRepository->find($data->get('department_id'));
         
@@ -94,6 +100,28 @@ class ApiEmployeesController extends AbstractController
         $employee->setCity($data->get('city'));
         $employee->setPhone($data->get('phone'));
         $employee->setDepartment($department);
+
+        if($request->files->has('avatar')) {
+            $avatarFile = $request->files->get('avatar');
+            
+            $avatarOginalFilename = pathinfo($avatarFile->getClientOriginalName(), PATHINFO_FILENAME);
+            dump($avatarOginalFilename);
+
+            $safeFilename = $slug->slug($avatarOginalFilename);
+            $avatarNewFilename = $safeFilename.'-'.uniqid().'.'.$avatarFile->guessExtension();
+            dump($avatarNewFilename);
+
+            try {
+                $avatarFile->move(
+                    $request->server->get('DOCUMENT_ROOT') . DIRECTORY_SEPARATOR . 'employee/avatar',
+                    $avatarNewFilename
+                );
+            } catch (FileException $e) {
+                throw new \Exception($e->getMessage());
+            }
+        }
+
+        die();
 
         $errors = $validator->validate($employee);
         
