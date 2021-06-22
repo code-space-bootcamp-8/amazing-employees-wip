@@ -67,7 +67,7 @@ class ApiEmployeesController extends AbstractController
      */
     public function show(
         Employee $employee,
-        EmployeeNormalize $employeeNormalize,
+        EmployeeNormalize $employeeNormalize
     ): Response
     {
         dump($this->getUser());
